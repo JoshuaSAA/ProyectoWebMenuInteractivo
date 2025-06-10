@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  frontend:
+    build: ./frontcomida
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - comida-net
+
+  backend:
+    build: ./backcomida
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - mqtt
+    networks:
+      - comida-net
+
+  db:
+    image: mysql:8.0
+    container_name: definitovo-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: pedidos_db
+      MYSQL_ROOT_HOST: '%'  # ✅ Permitir root desde cualquier IP
+    ports:
+      - "3308:3306"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - comida-net
+
+  mqtt:
+    build: ./mosquitto
+    ports:
+      - "1883:1883"
+      - "9002:9001"
+    networks:
+      - comida-net
+
+networks:
+  comida-net:
+    driver: bridge
